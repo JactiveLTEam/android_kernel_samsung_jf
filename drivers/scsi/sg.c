@@ -72,6 +72,7 @@ static void sg_proc_cleanup(void);
 #define SG_ALLOW_DIO_DEF 0
 
 #define SG_MAX_DEVS 32768
+#define SG_MAX_CDB_SIZE 252
 
 /*
  * Suppose you want to calculate the formula muldiv(x,m,d)=int(x * m / d)
