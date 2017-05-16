@@ -1879,7 +1879,7 @@ static int qcedev_check_cipher_params(struct qcedev_cipher_op_req *req,
 
 	/* Check for sum of all dst length is equal to data_len  */
 	for (i = 0; (i < QCEDEV_MAX_BUFFERS) && (total < req->data_len); i++) {
-		if (req->vbuf.dst[i].len > U32_MAX - total) {
+		if (req->vbuf.dst[i].len >= U32_MAX - total) {
 			pr_err("%s: Integer overflow on total req dst vbuf length\n",
 				__func__);
 			goto error;
