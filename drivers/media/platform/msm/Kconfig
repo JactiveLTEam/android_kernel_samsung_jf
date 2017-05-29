@@ -22,3 +22,5 @@ config MSM_CAMERA_DEBUG
 if MSM_CAMERA
 source "drivers/media/platform/msm/camera_v1/Kconfig"
 endif # MSM_CAMERA
+
+source "drivers/media/platform/msm/vidc/Kconfig"

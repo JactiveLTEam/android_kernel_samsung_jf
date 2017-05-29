@@ -1,1 +1,2 @@
+obj-$(CONFIG_MSM_VIDC_V4L2) += vidc/
 obj-$(CONFIG_MSM_CAMERA) += camera_v1/
