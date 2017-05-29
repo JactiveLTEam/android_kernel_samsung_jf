@@ -24,3 +24,4 @@ source "drivers/media/platform/msm/camera_v1/Kconfig"
 endif # MSM_CAMERA
 
 source "drivers/media/platform/msm/vidc/Kconfig"
+source "drivers/media/platform/msm/wfd/Kconfig"
