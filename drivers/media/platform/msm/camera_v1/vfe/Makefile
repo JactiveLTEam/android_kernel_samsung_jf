@@ -1,6 +1,6 @@
 GCC_VERSION      := $(shell $(CONFIG_SHELL) $(PWD)/scripts/gcc-version.sh $(CROSS_COMPILE)gcc)
-ccflags-y += -Idrivers/media/video/msm-bayer
-ccflags-y += -Idrivers/media/video/msm-bayer/server
+ccflags-y += -Idrivers/media/platform/msm/camera_v1
+ccflags-y += -Idrivers/media/platform/msm/camera_v1/server
 ifeq ($(CONFIG_MACH_JACTIVE_EUR),y)
 ccflags-y += -Idrivers/video/msm
 endif
