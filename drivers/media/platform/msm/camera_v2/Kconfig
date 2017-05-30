@@ -125,6 +125,10 @@ config S5K6B2YX
 		Supports low-power vision mode.
 		This sensor does not support auto focus.
 
+config S5K3H5XA
+        bool "Sensor S5K3H5XA (BAYER 8M)"
+        depends on MSMB_CAMERA 
+
 config S5K8B1YX
 	bool "Sensor S5K8B1YX (BAYER 2M)"
 	depends on MSMB_CAMERA
