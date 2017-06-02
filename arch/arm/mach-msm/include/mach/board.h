@@ -213,7 +213,11 @@ struct msm_gpio_set_tbl {
 struct msm_camera_csi_lane_params {
 	uint16_t csi_lane_assign;
 	uint16_t csi_lane_mask;
-	uint8_t csi_phy_sel;
+	/*uint8_t csi_phy_sel;*/
+};
+
+struct msm_camera_gpio_num_info {
+	uint16_t gpio_num[13];
 };
 
 struct msm_camera_gpio_conf {
@@ -230,6 +234,7 @@ struct msm_camera_gpio_conf {
 	uint8_t camera_off_table_size;
 	uint32_t *camera_on_table;
 	uint8_t camera_on_table_size;
+	struct msm_camera_gpio_num_info *gpio_num_info;
 };
 
 enum msm_camera_i2c_mux_mode {
@@ -247,9 +252,13 @@ struct msm_camera_i2c_conf {
 enum msm_camera_vreg_name_t {
 	CAM_VDIG,
 	CAM_VIO,
-	CAM_VANA,
 	CAM_VAF,
+	CAM_VANA,
+	CAM_COMP_MIPI_1P0,
+	CAM_COMP_1P8,
+	CAM_VREG_MAX,
 };
+
 #if defined(CONFIG_MACH_MELIUS)
 struct msm_camera_sensor_platform_info {
 	int mount_angle;

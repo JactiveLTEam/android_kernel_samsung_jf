@@ -2,7 +2,7 @@
 #include <linux/init.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
-#include <asm-generic/setup.h>
+#include <asm/setup.h>
 
 static char new_command_line[COMMAND_LINE_SIZE];
 

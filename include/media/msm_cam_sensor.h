@@ -109,7 +109,7 @@ enum msm_sensor_power_seq_gpio_t {
 	SENSOR_GPIO_MAX,
 };
 
-enum msm_camera_vreg_name_t {
+/*enum msm_camera_vreg_name_t {
 	CAM_VDIG,
 	CAM_VIO,
 	CAM_VAF,
@@ -117,7 +117,7 @@ enum msm_camera_vreg_name_t {
 	CAM_COMP_MIPI_1P0,
 	CAM_COMP_1P8,
 	CAM_VREG_MAX,
-};
+};*/
 
 enum msm_sensor_resolution_t {
 	MSM_SENSOR_RES_FULL,
@@ -327,10 +327,10 @@ struct msm_camera_csi2_params {
 	struct msm_camera_csiphy_params csiphy_params;
 };
 
-struct msm_camera_csi_lane_params {
+/*struct msm_camera_csi_lane_params {
 	uint16_t csi_lane_assign;
 	uint16_t csi_lane_mask;
-};
+};*/
 
 struct csi_lane_params_t {
 	uint16_t csi_lane_assign;

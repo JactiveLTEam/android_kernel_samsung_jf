@@ -66,9 +66,6 @@
 #endif
 
 
-/* Concurrent camera */
-static int gpio_ref_count;
-
 
 #ifdef CONFIG_MSM_CAMERA
 
