@@ -36,7 +36,7 @@ inline void msm_jpeg_q_init(char const *name, struct msm_jpeg_q *q_p)
 
 inline void *msm_jpeg_q_out(struct msm_jpeg_q *q_p)
 {
-	unsigned long flags = 0;
+	unsigned long flags;
 	struct msm_jpeg_q_entry *q_entry_p = NULL;
 	void *data = NULL;
 
@@ -62,7 +62,7 @@ inline void *msm_jpeg_q_out(struct msm_jpeg_q *q_p)
 
 inline int msm_jpeg_q_in(struct msm_jpeg_q *q_p, void *data)
 {
-	unsigned long flags = 0;
+	unsigned long flags;
 
 	struct msm_jpeg_q_entry *q_entry_p;
 
@@ -219,7 +219,6 @@ int msm_jpeg_evt_get(struct msm_jpeg_device *pgmn_dev,
 		return -EAGAIN;
 	}
 
-	memset(&ctrl_cmd, 0, sizeof(ctrl_cmd));
 	ctrl_cmd.type = buf_p->vbuf.type;
 	kfree(buf_p);
 
