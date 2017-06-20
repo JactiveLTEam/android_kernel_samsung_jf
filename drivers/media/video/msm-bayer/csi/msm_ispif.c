@@ -544,7 +544,7 @@ static void send_rdi_sof(struct ispif_device *ispif,
 
 static void ispif_do_tasklet(unsigned long data)
 {
-	unsigned long flags = 0;
+	unsigned long flags;
 
 	struct ispif_isr_queue_cmd *qcmd = NULL;
 	struct ispif_device *ispif;
@@ -572,7 +572,7 @@ static void ispif_do_tasklet(unsigned long data)
 static void ispif_process_irq(struct ispif_device *ispif,
 	struct ispif_irq_status *out)
 {
-	unsigned long flags = 0;
+	unsigned long flags;
 	struct ispif_isr_queue_cmd *qcmd;
 
 	qcmd = kzalloc(sizeof(struct ispif_isr_queue_cmd),
@@ -744,6 +744,13 @@ static int msm_ispif_init(struct ispif_device *ispif,
 
 static void msm_ispif_release(struct ispif_device *ispif)
 {
+        BUG_ON(!ispif);
+
+	if (!ispif->base) {
+	        pr_err("%s: ispif base is NULL\n", __func__);
+	        return;
+        }
+
 	if (ispif->ispif_state != ISPIF_POWER_UP) {
 		pr_err("%s: ispif invalid state %d\n", __func__,
 			ispif->ispif_state);
@@ -812,18 +819,14 @@ static long msm_ispif_cmd(struct v4l2_subdev *sd, void *arg)
 static long msm_ispif_subdev_ioctl(struct v4l2_subdev *sd, unsigned int cmd,
 								void *arg)
 {
+	struct ispif_device *ispif;
 	switch (cmd) {
 	case VIDIOC_MSM_ISPIF_CFG:
 		return msm_ispif_cmd(sd, arg);
-
-	case VIDIOC_MSM_ISPIF_RELEASE: {
-		struct ispif_device *ispif =
-                (struct ispif_device *)v4l2_get_subdevdata(sd);
-		CDBG("release ispif\n");
-                msm_ispif_release(ispif);
+	case VIDIOC_MSM_ISPIF_REL:
+		ispif =	(struct ispif_device *)v4l2_get_subdevdata(sd);
+		msm_ispif_release(ispif);
 		return 0;
-	}
-
 	default:
 		return -ENOIOCTLCMD;
 	}

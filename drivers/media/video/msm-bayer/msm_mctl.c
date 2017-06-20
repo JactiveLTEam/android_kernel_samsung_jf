@@ -680,7 +680,7 @@ static void msm_mctl_release(struct msm_cam_media_controller *p_mctl)
 	if (p_mctl->ispif_sdev) {
 		v4l2_set_subdev_hostdata(p_mctl->ispif_sdev, p_mctl);
                 v4l2_subdev_call(p_mctl->ispif_sdev, core, ioctl,
-                        VIDIOC_MSM_ISPIF_RELEASE, NULL);
+                        VIDIOC_MSM_ISPIF_REL, NULL);
 	}
 
 	if (p_mctl->axi_sdev) {
