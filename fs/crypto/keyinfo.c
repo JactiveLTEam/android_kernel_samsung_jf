@@ -250,7 +250,6 @@ got_key:
 
 	if (cmpxchg(&inode->i_crypt_info, NULL, crypt_info) == NULL)
 		crypt_info = NULL;
-
 out:
 	if (res == -ENOKEY)
 		res = 0;

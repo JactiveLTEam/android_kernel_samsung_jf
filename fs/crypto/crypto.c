@@ -361,7 +361,6 @@ static int fscrypt_d_revalidate(struct dentry *dentry, struct nameidata *nd)
 		return 0;
 	}
 
-
 	/* this should eventually be an flag in d_flags */
 	spin_lock(&dentry->d_lock);
 	cached_with_key = dentry->d_flags & DCACHE_ENCRYPTED_WITH_KEY;
