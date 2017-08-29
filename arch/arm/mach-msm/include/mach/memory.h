@@ -23,6 +23,8 @@
 #define END_MEM          UL(CONFIG_END_MEM)
 #endif
 
+#define MAX_HOLE_ADDRESS    (PHYS_OFFSET + 0x10000000)
+
 #define MAX_PHYSMEM_BITS 32
 #define SECTION_SIZE_BITS 28
 

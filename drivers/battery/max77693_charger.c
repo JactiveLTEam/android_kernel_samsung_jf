@@ -15,6 +15,7 @@
 #ifdef CONFIG_USB_HOST_NOTIFY
 #include "../../arch/arm/mach-msm/board-8064.h"
 #endif
+#include <linux/fastchg.h>
 
 #define ENABLE 1
 #define DISABLE 0
@@ -225,11 +226,7 @@ static void max77693_set_input_current(struct max77693_charger_data *charger,
 	int chg_state;
 
 	mutex_lock(&charger->ops_lock);
-	reg_data = 0;
-	reg_data = (1 << CHGIN_SHIFT);
-	max77693_update_reg(charger->max77693->i2c, MAX77693_CHG_REG_CHG_INT_MASK, reg_data,
-			CHGIN_MASK);
-
+	disable_irq(charger->irq_chgin);
 	if (charger->cable_type == POWER_SUPPLY_TYPE_WIRELESS)
 		set_reg = MAX77693_CHG_REG_CHG_CNFG_10;
 	else
@@ -342,10 +339,7 @@ set_input_current:
 	max77693_write_reg(charger->max77693->i2c,
 		set_reg, set_current_reg);
 exit:
-	reg_data = 0;
-	reg_data = (0 << CHGIN_SHIFT);
-	max77693_update_reg(charger->max77693->i2c, MAX77693_CHG_REG_CHG_INT_MASK, reg_data,
-			CHGIN_MASK);
+	enable_irq(charger->irq_chgin);
 	mutex_unlock(&charger->ops_lock);
 }
 
@@ -473,7 +467,7 @@ static void max77693_recovery_work(struct work_struct *work)
 		(chgin_dtls == 0x3) && (chg_dtls != 0x8) && (byp_dtls == 0x0))) {
 		pr_info("%s: try to recovery, cnt(%d)\n", __func__,
 				(chg_data->soft_reg_recovery_cnt + 1));
-		if (chg_data->siop_level < 100 &&
+		if (screen_on_current_limit && chg_data->siop_level < 100 &&
 				chg_data->cable_type == POWER_SUPPLY_TYPE_MAINS) {
 			pr_info("%s : LCD on status and revocer current\n", __func__);
 			max77693_set_input_current(chg_data,
@@ -712,14 +706,10 @@ static int sec_chg_get_property(struct power_supply *psy,
 		val->intval = max77693_get_health_state(charger);
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_MAX:
-		// AOSP expects the charging current to be in microamperes
-		// frameworks/base/core/java/android/os/BatteryManager.java L256
-		val->intval = charger->charging_current_max * 1000;
+		val->intval = charger->charging_current_max;
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_AVG:
-		// AOSP expects the charging current to be in microamperes
-		// frameworks/base/core/java/android/os/BatteryManager.java L263
-		val->intval = charger->charging_current * 1000;
+		val->intval = charger->charging_current;
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
 		val->intval = max77693_get_input_current(charger);
@@ -757,7 +747,6 @@ static int sec_chg_set_property(struct power_supply *psy,
 		POWER_SUPPLY_TYPE_USB].fast_charging_current;
 	const int wpc_charging_current = charger->pdata->charging_current[
 		POWER_SUPPLY_TYPE_WIRELESS].input_current_limit;
-	u8 chg_cnfg_00;
 
 	switch (psp) {
 	case POWER_SUPPLY_PROP_STATUS:
@@ -767,24 +756,6 @@ static int sec_chg_set_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_ONLINE:
 		/* check and unlock */
 		check_charger_unlock_state(charger);
-
-		if (val->intval == POWER_SUPPLY_TYPE_POWER_SHARING) {
-			psy_do_property("ps", get,
-					POWER_SUPPLY_PROP_STATUS, value);
-			chg_cnfg_00 = CHG_CNFG_00_OTG_MASK
-				| CHG_CNFG_00_BOOST_MASK
-				| CHG_CNFG_00_DIS_MUIC_CTRL_MASK;
-			if (value.intval) {
-				max77693_update_reg(charger->max77693->i2c, MAX77693_CHG_REG_CHG_CNFG_00,
-						chg_cnfg_00, chg_cnfg_00);
-				pr_info("%s: ps enable\n", __func__);
-			} else {
-				max77693_update_reg(charger->max77693->i2c, MAX77693_CHG_REG_CHG_CNFG_00,
-						0, chg_cnfg_00);
-				pr_info("%s: ps disable\n", __func__);
-			}
-			break;
-		}
 		charger->cable_type = val->intval;
 		psy_do_property("battery", get,
 				POWER_SUPPLY_PROP_HEALTH, value);
@@ -821,13 +792,14 @@ static int sec_chg_set_property(struct power_supply *psy,
 			if (set_charging_current > 0 &&
 					set_charging_current < usb_charging_current)
 				set_charging_current = usb_charging_current;
+
 			if (val->intval == POWER_SUPPLY_TYPE_WIRELESS)
 				set_charging_current_max = wpc_charging_current;
 			else
 				set_charging_current_max =
 					charger->charging_current_max;
 
-			if (charger->siop_level < 100 &&
+			if (screen_on_current_limit && charger->siop_level < 100 &&
 					val->intval == POWER_SUPPLY_TYPE_MAINS) {
 				set_charging_current_max = SIOP_INPUT_LIMIT_CURRENT;
 				if (set_charging_current > SIOP_CHARGING_LIMIT_CURRENT)
@@ -877,14 +849,14 @@ static int sec_chg_set_property(struct power_supply *psy,
 
 			/* do forced set charging current */
 			if (charger->cable_type == POWER_SUPPLY_TYPE_MAINS) {
-				if (charger->siop_level < 100 )
+				if (screen_on_current_limit && charger->siop_level < 100 )
 					set_charging_current_max =
 						SIOP_INPUT_LIMIT_CURRENT;
 				else
 					set_charging_current_max =
 						charger->charging_current_max;
 
-				if (charger->siop_level < 100 && current_now > SIOP_CHARGING_LIMIT_CURRENT)
+				if (screen_on_current_limit && charger->siop_level < 100 && current_now > SIOP_CHARGING_LIMIT_CURRENT)
 					current_now = SIOP_CHARGING_LIMIT_CURRENT;
 				max77693_set_input_current(charger,
 						set_charging_current_max);
@@ -1111,7 +1083,7 @@ static void wpc_detect_work(struct work_struct *work)
 				POWER_SUPPLY_PROP_ONLINE, value);
 		pr_info("%s: wpc activated, set V_INT as PN\n",
 				__func__);
-	} else if (wc_w_state == 0) {
+	} else if ((chg_data->wc_w_state == 1) && (wc_w_state == 0)) {
 		if (!chg_data->is_charging)
 			max77693_set_charger_state(chg_data, true);
 		max77693_read_reg(chg_data->max77693->i2c,
@@ -1154,7 +1126,7 @@ static irqreturn_t wpc_charger_irq(int irq, void *data)
 	if (chg_data->wc_w_state)
 		delay = msecs_to_jiffies(500);
 	else
-		delay = msecs_to_jiffies(200);
+		delay = msecs_to_jiffies(0);
 #endif
 	queue_delayed_work(chg_data->wqueue, &chg_data->wpc_work,
 			delay);
@@ -1249,12 +1221,8 @@ static void max77693_chgin_isr_work(struct work_struct *work)
 	int battery_health;
 	union power_supply_propval value;
 	int stable_count = 0;
-	u8 reg_data;
 
-	reg_data = 0;
-	reg_data = (1 << CHGIN_SHIFT);
-	max77693_update_reg(charger->max77693->i2c, MAX77693_CHG_REG_CHG_INT_MASK, reg_data,
-			CHGIN_MASK);
+	disable_irq(charger->irq_chgin);
 
 	while (1) {
 		psy_do_property("battery", get,
@@ -1331,10 +1299,7 @@ static void max77693_chgin_isr_work(struct work_struct *work)
 		prev_chgin_dtls = chgin_dtls;
 		msleep(100);
 	}
-	reg_data = 0;
-	reg_data = (0 << CHGIN_SHIFT);
-	max77693_update_reg(charger->max77693->i2c, MAX77693_CHG_REG_CHG_INT_MASK, reg_data,
-			CHGIN_MASK);
+	enable_irq(charger->irq_chgin);
 }
 
 static irqreturn_t max77693_chgin_irq(int irq, void *data)
